@@ -10,9 +10,22 @@ from collections import namedtuple
 import Heuristic
 import random
 import math
+import time
+
+class unit:
+    def __init__(self, starting_pos, unit_type):
+        self.current = starting_pos
+        self.unit_type = unit_type
+        
+    def get_pos(self):
+        return self.current
+    
+    def change_pos(self, next_pos):
+        self.current = next_pos
 
 grid_to_node = {}
 grid = []
+square = unit((0,0), "Square")
 
 black    = (   0,   0,   0)
 white    = ( 255, 255, 255)
@@ -35,6 +48,7 @@ graph = Graph.Graph()
 # This sets the margin between each cell
 margin = 5
 
+print "init grid"
 for row in range(ROWS):
     grid.append([])
     for column in range(COLUMNS):
@@ -50,12 +64,37 @@ def reset_grid():
     
 grid[0][0] = 1
 
-for i in range(int(math.ceil(0.1 * (ROWS * COLUMNS)))):
+def draw():
+    print "drawing"
+    screen.fill(black)
+    for row in range(ROWS):
+        for column in range(COLUMNS):
+            color = white
+            if grid[row][column] == 1:
+                color = red
+            elif grid[row][column] == 2:
+                color = green
+            elif grid[row][column] == 3:
+                color = blue
+            pygame.draw.rect(screen,
+                             color,
+                             [(margin+width)*column+margin,
+                              (margin+height)*row+margin,
+                              width,
+                              height])
+    # Limit to 20 frames per second
+    clock.tick(20)
+    # Go ahead and update the screen with what we've drawn.
+    pygame.display.flip()
+    
+print "init high cost"
+for i in range(int(math.ceil(0.5 * (ROWS * COLUMNS)))):
     highx = random.randint(0, ROWS-1)
     highy = random.randint(0, COLUMNS-1)
     grid[highx][highy] = 3
 
 node_grid = []
+print "init node grid"
 for i in range(ROWS):
     node_grid.append([])
     for j in range(COLUMNS):
@@ -65,7 +104,8 @@ for i in range(ROWS):
             node = Node(i,j,10000)
         node_grid[i].append(node)
         graph.add_node(node)
-        
+
+print "conver to graph(edges)"
 for i in range(ROWS):
     for j in range(COLUMNS):
         if j > 0: # has a left neighbor
@@ -85,7 +125,7 @@ for i in range(ROWS):
         if j < COLUMNS-1 and i < ROWS-1: # has bottom right neighbor
             graph.add_edge(node_grid[i][j], node_grid[i+1][j+1])
      
-    
+print "init pygame" 
 pygame.init()
 size = [(width*COLUMNS)+(margin*(COLUMNS+1)), (height*ROWS)+(margin*(ROWS+1))]
 screen = pygame.display.set_mode(size)
@@ -99,8 +139,9 @@ done = False
 # Used to manage how fast the screen updates
 clock = pygame.time.Clock()
 
-
+print "main event loop"
 while not done:
+    draw()
     for event in pygame.event.get(): # User did something
         if event.type == pygame.QUIT: # If user clicked close
             done = True # Flag that we are done so we exit this loop
@@ -112,40 +153,23 @@ while not done:
             column = pos[0] // (width + margin)
             row = pos[1] // (height + margin)
             # Set that location to zero
-            grid[row][column] = 1
-            #print("Click ", pos, "Grid coordinates: ", row, column)
+            grid[row][column] = 2
+            #print("Click", pos, "Grid coordinates: ", row, column)
             path = Astar.Astar(node_grid[0][0], node_grid[row][column], graph)
-            for node in path:
+            '''for node in path:
                 #print node.x, node.y
                 if grid[node.x][node.y] != 3:
-                    grid[node.x][node.y] = 2
+                    grid[node.x][node.y] = 2'''
             grid[0][0] = 1 # color the start red
-            
-    # Set the screen background
-    screen.fill(black)
-    
-    # Draw the grid
-    for row in range(ROWS):
-        for column in range(COLUMNS):
-            color = white
-            if grid[row][column] == 1:
-                color = red
-            elif grid[row][column] == 2:
-                color = green
-            elif grid[row][column] == 3:
-                color = blue
-            pygame.draw.rect(screen,
-                             color,
-                             [(margin+width)*column+margin,
-                              (margin+height)*row+margin,
-                              width,
-                              height])
-    
-    # Limit to 20 frames per second
-    clock.tick(20)
+            for node in path:
+                square.change_pos((node.x, node.y))                                    
+                grid[node.x][node.y] = 1
+                #time.sleep(2)
+                draw()
+                print "done drawing"
+                
 
-    # Go ahead and update the screen with what we've drawn.
-    pygame.display.flip()
+    
     
 # Be IDLE friendly. If you forget this line, the program will 'hang'
 # on exit.
