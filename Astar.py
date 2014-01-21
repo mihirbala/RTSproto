@@ -24,7 +24,8 @@ def Astar(start, goal, graph):
 				#print i, f_score[i]
 				lowest_cost = f_score[i]
 				current = i
-		if current == goal:  
+		if current == goal:
+            #print "current is equal to goal"
 			return reconstruct_path(came_from, goal)         
 		#print "this is current", current
 		openset.remove(current)
@@ -51,7 +52,12 @@ def Astar(start, goal, graph):
 
 def reconstruct_path(came_from, goal):
 	#print "returning shortest path", came_from[goal]
-	return came_from[goal]
+    if goal in came_from[goal]:
+        came_from[goal].append(goal)
+        #print "returning shortest path", came_from[goal]
+    else:
+        return came_from[goal]
+        #print "returning shortest path", came_from[goal]
 
 def g_score_comp(node, came_from):
 	sumcost = 0
@@ -59,7 +65,4 @@ def g_score_comp(node, came_from):
 		#print n
 		sumcost += n.cost
 	return sumcost
-
-# <codecell>
-
 
